@@ -1,0 +1,22 @@
+# Normalize line endings: keep LF in the repo, auto-convert on checkout.
+* text=auto
+
+# Explicit text types
+*.cs       text diff=csharp
+*.xaml     text
+*.csproj   text
+*.sln      text
+*.md       text
+*.json     text
+*.yml      text
+*.ps1      text eol=crlf
+*.iss      text eol=crlf
+
+# Binary assets — never touch
+*.png      binary
+*.ico      binary
+*.pdf      binary
+*.docx     binary
+*.zip      binary
+*.7z       binary
+*.exe      binary

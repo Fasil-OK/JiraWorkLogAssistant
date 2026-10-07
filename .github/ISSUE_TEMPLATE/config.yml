@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📖 User guide & FAQ
+    url: https://github.com/Fasil-OK/JiraWorkLogAssistant/blob/main/docs/index.html
+    about: Read the full guide (installation, setup, features, troubleshooting) before opening an issue.

@@ -1,0 +1,28 @@
+<UserControl x:Class="JiraWorkLogAssistant.Views.Controls.NumericSpinner"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d" d:DesignWidth="64" d:DesignHeight="26">
+    <Border Background="White" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="4">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBox x:Name="ValueBox" Grid.Column="0"
+                     BorderThickness="0" Background="Transparent" Foreground="#111827"
+                     CaretBrush="#111827" FontSize="12" Padding="6,2"
+                     VerticalContentAlignment="Center" TextAlignment="Center"
+                     MaxLength="2"
+                     PreviewTextInput="ValueBox_PreviewTextInput"
+                     TextChanged="ValueBox_TextChanged"/>
+            <StackPanel Grid.Column="1" Width="16">
+                <RepeatButton x:Name="UpBtn" Content="▲" FontSize="6" Click="Up_Click"
+                              Foreground="#475569" Background="#F1F5F9" BorderThickness="0" Height="12"/>
+                <RepeatButton x:Name="DownBtn" Content="▼" FontSize="6" Click="Down_Click"
+                              Foreground="#475569" Background="#F1F5F9" BorderThickness="0" Height="12"/>
+            </StackPanel>
+        </Grid>
+    </Border>
+</UserControl>

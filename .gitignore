@@ -1,0 +1,74 @@
+# ──────────────────────────────────────────────────────────────
+#  Build output
+# ──────────────────────────────────────────────────────────────
+[Bb]in/
+[Oo]bj/
+[Oo]ut/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+build/
+bld/
+msbuild.log
+msbuild.err
+msbuild.wrn
+
+# ──────────────────────────────────────────────────────────────
+#  Publish & distribution artifacts (shipped via GitHub Releases, not git)
+# ──────────────────────────────────────────────────────────────
+publish/
+publish-sc/
+*.exe
+*.7z
+*.zip
+# Local installer staging folder
+JiraWorkLog_Istaller/
+
+# ──────────────────────────────────────────────────────────────
+#  Visual Studio / Rider / VS Code
+# ──────────────────────────────────────────────────────────────
+.vs/
+.idea/
+*.user
+*.suo
+*.userprefs
+*.rsuser
+*.sln.docstates
+.vscode/*
+!.vscode/extensions.json
+!.vscode/launch.json
+
+# ──────────────────────────────────────────────────────────────
+#  NuGet
+# ──────────────────────────────────────────────────────────────
+*.nupkg
+*.snupkg
+packages/
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# ──────────────────────────────────────────────────────────────
+#  Runtime / local data
+# ──────────────────────────────────────────────────────────────
+*.db
+*.db-shm
+*.db-wal
+*.log
+logs/
+
+# ──────────────────────────────────────────────────────────────
+#  OS cruft
+# ──────────────────────────────────────────────────────────────
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+
+# ──────────────────────────────────────────────────────────────
+#  Keep these (negated so the gallery & icons ship)
+# ──────────────────────────────────────────────────────────────
+!docs/screenshots/*.png
+!src/JiraWorkLogAssistant/Resources/Icons/*

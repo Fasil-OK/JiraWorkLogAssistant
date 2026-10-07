@@ -1,0 +1,137 @@
+<Window x:Class="JiraWorkLogAssistant.Views.SmartReviewWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:ctl="clr-namespace:JiraWorkLogAssistant.Views.Controls"
+        xmlns:conv="clr-namespace:JiraWorkLogAssistant.Views.Converters"
+        mc:Ignorable="d"
+        Title="Review Smart Distribution"
+        Width="560" Height="600"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="CanResizeWithGrip" MinWidth="460" MinHeight="420">
+    <Window.Resources>
+        <conv:BoolToConfidenceColorConverter x:Key="ConfColor"/>
+    </Window.Resources>
+    <Border Background="#1E1E2E" BorderThickness="2" CornerRadius="10">
+        <Border.BorderBrush>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Color="#7C3AED" Offset="0"/>
+                <GradientStop Color="#EC4899" Offset="1"/>
+            </LinearGradientBrush>
+        </Border.BorderBrush>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <Border Grid.Row="0" Background="#26263A" Padding="16,12" CornerRadius="8,8,0,0"
+                    MouseLeftButtonDown="Header_MouseLeftButtonDown">
+                <Grid>
+                    <StackPanel>
+                        <TextBlock x:Name="TitleText" Text="Review" FontSize="15" FontWeight="Bold" Foreground="#E2E8F0"/>
+                        <TextBlock x:Name="SubTitle" FontSize="11" Foreground="#94A3B8"/>
+                    </StackPanel>
+                    <Button Content="✕" HorizontalAlignment="Right" VerticalAlignment="Top"
+                            Width="26" Height="26" Click="Cancel_Click" Style="{StaticResource CloseButtonStyle}"/>
+                </Grid>
+            </Border>
+
+            <!-- Rows -->
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="14,10">
+                <ItemsControl x:Name="ItemsList">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Background="#2A2A3E" CornerRadius="8" Padding="12,10" Margin="0,0,0,8">
+                                <StackPanel>
+                                    <Grid>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{Binding Key}" FontWeight="Bold" Foreground="#C4B5FD" FontSize="13" VerticalAlignment="Center"/>
+                                            <TextBlock Text="{Binding Summary}" Foreground="#94A3B8" FontSize="12"
+                                                       Margin="8,0,0,0" TextTrimming="CharacterEllipsis" MaxWidth="230" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                            <Border CornerRadius="4" Padding="6,2" Background="#1A1A2E" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding ConfidenceText}" FontSize="10"
+                                                           Foreground="{Binding IsLowConfidence, Converter={StaticResource ConfColor}}"/>
+                                            </Border>
+                                            <Button Content="✕" Width="22" Height="22" Margin="6,0,0,0"
+                                                    Click="RemoveItem_Click" ToolTip="Remove this task from submission"
+                                                    Style="{StaticResource CloseButtonStyle}"/>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <TextBlock Text="{Binding Notes}" Foreground="#64748B" FontSize="10"
+                                               TextWrapping="Wrap" Margin="0,4,0,6"/>
+
+                                    <TextBox Text="{Binding WorkLog, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource ModernTextBoxStyle}"
+                                             TextWrapping="Wrap" AcceptsReturn="True" MinHeight="48" FontSize="12"
+                                             Foreground="#E2E8F0"/>
+
+                                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0" VerticalAlignment="Center">
+                                        <TextBlock Text="Time:" Foreground="#94A3B8" FontSize="11" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                        <ctl:NumericSpinner Width="56" Height="26" Value="{Binding Hours, Mode=TwoWay}" Minimum="0" Maximum="24"/>
+                                        <TextBlock Text="h" Foreground="#94A3B8" FontSize="11" VerticalAlignment="Center" Margin="3,0,8,0"/>
+                                        <ctl:NumericSpinner Width="56" Height="26" Value="{Binding Minutes, Mode=TwoWay}" Minimum="0" Maximum="59"/>
+                                        <TextBlock Text="m" Foreground="#94A3B8" FontSize="11" VerticalAlignment="Center" Margin="3,0,0,0"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+
+            <!-- Add-task bar: manually add a task the AI missed -->
+            <Border Grid.Row="2" Background="#23233A" Padding="14,8">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Add task:" Foreground="#94A3B8" FontSize="11"
+                               VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <ComboBox Grid.Column="1" x:Name="AddTaskCombo"
+                              IsEditable="True" StaysOpenOnEdit="True" IsTextSearchEnabled="True"
+                              TextSearch.TextPath="Key" FontSize="12"
+                              ToolTip="Pick a Jira task the AI didn't include">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" ToolTip="{Binding KeyAndSummary}">
+                                    <Border Width="8" Height="8" CornerRadius="4" Margin="0,0,6,0"
+                                            Background="{Binding TypeColor}" VerticalAlignment="Center"/>
+                                    <TextBlock Text="{Binding Key}" FontWeight="Bold" Foreground="#E2E8F0" Margin="0,0,5,0"/>
+                                    <TextBlock Text="{Binding Summary}" Foreground="#94A3B8"
+                                               TextTrimming="CharacterEllipsis" MaxWidth="240"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                    <Button Grid.Column="2" Content="+ Add" Click="AddTask_Click" Margin="8,0,0,0"
+                            Style="{StaticResource SecondaryButtonStyle}" FontSize="11" Padding="10,4"/>
+                </Grid>
+            </Border>
+
+            <!-- Footer -->
+            <Border Grid.Row="3" Background="#26263A" Padding="14,10" CornerRadius="0,0,8,8">
+                <Grid>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="Allocated: " Foreground="#94A3B8" FontSize="12" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="TotalText" FontSize="13" FontWeight="Bold" Foreground="#E2E8F0" VerticalAlignment="Center"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="Cancel" Click="Cancel_Click" Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,8,0"/>
+                        <Button Content="Submit to Jira" Click="Submit_Click" Style="{StaticResource SuccessButtonStyle}"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+    </Border>
+</Window>

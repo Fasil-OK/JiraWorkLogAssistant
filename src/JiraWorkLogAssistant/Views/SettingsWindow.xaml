@@ -1,0 +1,291 @@
+<Window x:Class="JiraWorkLogAssistant.Views.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:conv="clr-namespace:JiraWorkLogAssistant.Views.Converters"
+        mc:Ignorable="d"
+        Title="Settings"
+        Width="460" Height="560"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="CanResizeWithGrip"
+        MinWidth="420" MinHeight="460"
+        Loaded="Window_Loaded">
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+        <conv:StringToVisibilityConverter x:Key="StrToVis"/>
+        <conv:InverseBoolToVisibilityConverter x:Key="InvBoolToVis"/>
+    </Window.Resources>
+    <Border Background="#1E1E2E" CornerRadius="10" BorderBrush="#374151" BorderThickness="1">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <Border Grid.Row="0" Background="#26263A" Padding="14,10" CornerRadius="10,10,0,0"
+                    MouseLeftButtonDown="Header_MouseLeftButtonDown">
+                <Grid>
+                    <TextBlock Text="Settings" FontSize="15" FontWeight="Bold" Foreground="#E2E8F0" VerticalAlignment="Center"/>
+                    <Button Content="✕" HorizontalAlignment="Right" Width="26" Height="26"
+                            Click="Close_Click" Style="{StaticResource CloseButtonStyle}"/>
+                </Grid>
+            </Border>
+
+            <!-- Tabs -->
+            <TabControl Grid.Row="1" Background="Transparent" BorderThickness="0" Padding="0">
+                <TabControl.Resources>
+                    <Style TargetType="TabItem">
+                        <Setter Property="Background" Value="Transparent"/>
+                        <Setter Property="Foreground" Value="#94A3B8"/>
+                        <Setter Property="FontSize" Value="12"/>
+                        <Setter Property="Padding" Value="14,8"/>
+                        <Setter Property="BorderThickness" Value="0"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="TabItem">
+                                    <Border x:Name="bd" Padding="{TemplateBinding Padding}" Background="Transparent"
+                                            BorderBrush="Transparent" BorderThickness="0,0,0,2">
+                                        <ContentPresenter ContentSource="Header" HorizontalAlignment="Center"/>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter Property="Foreground" Value="#A855F7"/>
+                                            <Setter TargetName="bd" Property="BorderBrush" Value="#A855F7"/>
+                                        </Trigger>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Foreground" Value="#E2E8F0"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </TabControl.Resources>
+
+                <!-- Jira Tab -->
+                <TabItem Header="Jira">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="18,14">
+                        <StackPanel>
+                            <TextBlock Text="Jira Configuration" Style="{StaticResource SectionTitleStyle}"/>
+
+                            <TextBlock Text="Jira Base URL" Style="{StaticResource FieldLabelStyle}"/>
+                            <TextBox Text="{Binding JiraBaseUrl}" Style="{StaticResource ModernTextBoxStyle}" Margin="0,0,0,10"/>
+
+                            <TextBlock Text="Username" Style="{StaticResource FieldLabelStyle}"/>
+                            <TextBox Text="{Binding JiraUsername}" Style="{StaticResource ModernTextBoxStyle}" Margin="0,0,0,10"/>
+
+                            <TextBlock Text="Password" Style="{StaticResource FieldLabelStyle}"/>
+                            <PasswordBox x:Name="JiraTokenBox" Style="{StaticResource ModernPasswordBoxStyle}"
+                                         Margin="0,0,0,4" PasswordChanged="JiraToken_PasswordChanged"/>
+                            <TextBlock Text="Your Jira username &amp; password (Server / Data Center)."
+                                       FontSize="10" Foreground="#475569" Margin="0,0,0,14"/>
+
+                            <StackPanel Orientation="Horizontal">
+                                <Button Content="Test Connection" Command="{Binding TestJiraCommand}"
+                                        Style="{StaticResource SecondaryButtonStyle}"/>
+                                <Button Content="Save" Command="{Binding SaveJiraCommand}"
+                                        Style="{StaticResource PrimaryButtonStyle}"/>
+                            </StackPanel>
+
+                            <Border Background="#2A2A3E" CornerRadius="6" Padding="10,8" Margin="0,12,0,0"
+                                    Visibility="{Binding JiraStatus, Converter={StaticResource StrToVis}}">
+                                <TextBlock Text="{Binding JiraStatus}" Foreground="#22C55E" FontSize="12" TextWrapping="Wrap"/>
+                            </Border>
+
+                            <ProgressBar IsIndeterminate="True" Height="2" Margin="0,8,0,0"
+                                         Foreground="{StaticResource AccentBrush}" Background="Transparent" BorderThickness="0"
+                                         Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}"/>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
+                <!-- Bitbucket Tab -->
+                <TabItem Header="Bitbucket">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="18,14">
+                        <StackPanel>
+                            <TextBlock Text="Bitbucket (Data Center)" Style="{StaticResource SectionTitleStyle}"/>
+                            <TextBlock Text="Fetch your commits into a note. Uses the same username / password across all repos below."
+                                       Foreground="#64748B" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,12"/>
+
+                            <TextBlock Text="Username" Style="{StaticResource FieldLabelStyle}"/>
+                            <TextBox Text="{Binding BbUsername}" Style="{StaticResource ModernTextBoxStyle}" Margin="0,0,0,10"/>
+
+                            <TextBlock Text="Password" Style="{StaticResource FieldLabelStyle}"/>
+                            <PasswordBox x:Name="BbPasswordBox" Style="{StaticResource ModernPasswordBoxStyle}"
+                                         Margin="0,0,0,10" PasswordChanged="BbPassword_PasswordChanged"/>
+
+                            <TextBlock Text="Repository URLs (one per line)" Style="{StaticResource FieldLabelStyle}"/>
+                            <TextBlock Text="Paste full repo URLs, e.g. http://host/bitbucket/projects/INDIA/repos/repo_name"
+                                       Foreground="#64748B" FontSize="10" Margin="0,0,0,4" TextWrapping="Wrap"/>
+                            <TextBox Text="{Binding BbRepoUrls, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource ModernTextBoxStyle}"
+                                     TextWrapping="NoWrap" AcceptsReturn="True" MinHeight="90" MaxHeight="160"
+                                     VerticalScrollBarVisibility="Auto"
+                                     HorizontalScrollBarVisibility="Auto" Margin="0,0,0,14"/>
+
+                            <StackPanel Orientation="Horizontal">
+                                <Button Content="Test Connection" Command="{Binding TestBitbucketCommand}"
+                                        Style="{StaticResource SecondaryButtonStyle}"/>
+                                <Button Content="Save" Command="{Binding SaveBitbucketCommand}"
+                                        Style="{StaticResource PrimaryButtonStyle}"/>
+                            </StackPanel>
+
+                            <TextBlock Text="{Binding BbStatus}" FontSize="12" Margin="0,10,0,0" TextWrapping="Wrap"
+                                       Visibility="{Binding BbStatus, Converter={StaticResource StrToVis}}">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="#22C55E"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding BbStatusIsError}" Value="True">
+                                                <Setter Property="Foreground" Value="#EF4444"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+
+                            <ProgressBar IsIndeterminate="True" Height="2" Margin="0,8,0,0"
+                                         Foreground="{StaticResource AccentBrush}" Background="Transparent" BorderThickness="0"
+                                         Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}"/>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
+                <!-- AI Tab -->
+                <TabItem Header="AI">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="18,14">
+                        <StackPanel>
+                            <TextBlock Text="AI Configuration" Style="{StaticResource SectionTitleStyle}"/>
+                            <TextBlock Text="Any OpenAI-compatible endpoint" Foreground="#64748B" FontSize="11" Margin="0,0,0,14"/>
+
+                            <TextBlock Text="API Base URL" Style="{StaticResource FieldLabelStyle}"/>
+                            <TextBox Text="{Binding AIBaseUrl}" Style="{StaticResource ModernTextBoxStyle}" Margin="0,0,0,10"/>
+
+                            <TextBlock Text="API Key" Style="{StaticResource FieldLabelStyle}"/>
+                            <PasswordBox x:Name="AIKeyBox" Style="{StaticResource ModernPasswordBoxStyle}"
+                                         Margin="0,0,0,10" PasswordChanged="AIKey_PasswordChanged"/>
+
+                            <TextBlock Text="Model Name" Style="{StaticResource FieldLabelStyle}"/>
+                            <TextBox Text="{Binding AIModelName}" Style="{StaticResource ModernTextBoxStyle}" Margin="0,0,0,8"/>
+
+                            <Border Background="#1A1A2E" CornerRadius="6" Padding="12,10" Margin="0,0,0,14">
+                                <StackPanel>
+                                    <TextBlock Text="Examples" Foreground="#64748B" FontSize="10" Margin="0,0,0,5"/>
+                                    <TextBlock Text="OpenAI · https://api.openai.com/v1" Foreground="#94A3B8" FontSize="10"/>
+                                    <TextBlock Text="Ollama · http://localhost:11434/v1" Foreground="#94A3B8" FontSize="10"/>
+                                    <TextBlock Text="LM Studio · http://localhost:1234/v1" Foreground="#94A3B8" FontSize="10"/>
+                                    <TextBlock Text="DeepSeek · https://api.deepseek.com/v1" Foreground="#94A3B8" FontSize="10"/>
+                                </StackPanel>
+                            </Border>
+
+                            <CheckBox Content="Enable AI polishing (review before submit)" IsChecked="{Binding EnablePolishing}"
+                                      Style="{StaticResource ModernCheckBoxStyle}" Margin="0,0,0,4"/>
+                            <TextBlock Text="When off, notes are logged to Jira as written — no AI rewrite and no review popup."
+                                       Foreground="#64748B" FontSize="10" Margin="0,0,0,14" TextWrapping="Wrap"/>
+
+                            <TextBlock Text="Work Log System Prompt" Style="{StaticResource FieldLabelStyle}"/>
+                            <TextBlock Text="Controls how the AI polishes notes into work logs. Edit this, or clear it to fall back to the built-in default."
+                                       Foreground="#64748B" FontSize="10" Margin="0,0,0,4" TextWrapping="Wrap"/>
+                            <TextBox Text="{Binding AIWorkLogPrompt, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource ModernTextBoxStyle}"
+                                     TextWrapping="Wrap" AcceptsReturn="True" MinHeight="110" MaxHeight="180"
+                                     VerticalScrollBarVisibility="Auto" Margin="0,0,0,14"/>
+
+                            <StackPanel Orientation="Horizontal">
+                                <Button Content="Test AI Connection" Command="{Binding TestAICommand}"
+                                        Style="{StaticResource SecondaryButtonStyle}"/>
+                                <Button Content="Save" Command="{Binding SaveAICommand}"
+                                        Style="{StaticResource PrimaryButtonStyle}"/>
+                            </StackPanel>
+
+                            <TextBlock Text="{Binding AIStatus}" FontSize="12" Margin="0,10,0,0"
+                                       TextWrapping="Wrap"
+                                       Visibility="{Binding AIStatus, Converter={StaticResource StrToVis}}">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="#22C55E"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding AIStatusIsError}" Value="True">
+                                                <Setter Property="Foreground" Value="#EF4444"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
+                <!-- Auto Logging Tab -->
+                <TabItem Header="Auto Log">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="18,14">
+                        <StackPanel>
+                            <TextBlock Text="Auto Logging" Style="{StaticResource SectionTitleStyle}"/>
+                            <TextBlock Text="When enabled, each open task note is logged to Jira automatically at the time below — its text is submitted as-is (no review)."
+                                       Foreground="#64748B" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,12"/>
+
+                            <CheckBox Content="Enable Auto Logging" IsChecked="{Binding EnableAutoLogging}"
+                                      Style="{StaticResource ModernCheckBoxStyle}" Margin="0,0,0,12"/>
+
+                            <TextBlock Text="Daily Logging Time (HH:mm)" Style="{StaticResource FieldLabelStyle}"/>
+                            <TextBox Text="{Binding AutoLoggingTime}" Style="{StaticResource ModernTextBoxStyle}"
+                                     IsEnabled="{Binding EnableAutoLogging}"
+                                     Margin="0,0,0,16" Width="110" HorizontalAlignment="Left"/>
+
+                            <Button Content="Save Settings" Command="{Binding SaveAutoLoggingCommand}"
+                                    Style="{StaticResource PrimaryButtonStyle}" HorizontalAlignment="Left"/>
+                            <TextBlock Text="{Binding StatusMessage}" Foreground="#22C55E" FontSize="12" Margin="0,10,0,0"
+                                       Visibility="{Binding StatusMessage, Converter={StaticResource StrToVis}}"/>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
+                <!-- General Tab -->
+                <TabItem Header="General">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="18,14">
+                        <StackPanel>
+                            <TextBlock Text="Application" Style="{StaticResource SectionTitleStyle}"/>
+                            <CheckBox Content="Launch on Windows Startup" IsChecked="{Binding LaunchOnStartup}"
+                                      Style="{StaticResource ModernCheckBoxStyle}" Margin="0,0,0,14"/>
+
+                            <TextBlock Text="Submission Behavior" Style="{StaticResource SectionTitleStyle}" FontSize="13"/>
+                            <CheckBox Content="Require Approval Before Submission" IsChecked="{Binding RequireApproval}"
+                                      Style="{StaticResource ModernCheckBoxStyle}" Margin="0,0,0,7"/>
+                            <CheckBox Content="Archive Notes After Submission" IsChecked="{Binding ArchiveNotes}"
+                                      Style="{StaticResource ModernCheckBoxStyle}" Margin="0,0,0,7"/>
+                            <CheckBox Content="Close Windows After Submission" IsChecked="{Binding CloseWindows}"
+                                      Style="{StaticResource ModernCheckBoxStyle}" Margin="0,0,0,7"/>
+                            <CheckBox Content="Enable Daily Summary" IsChecked="{Binding EnableDailySummary}"
+                                      Style="{StaticResource ModernCheckBoxStyle}" Margin="0,0,0,14"/>
+
+                            <TextBlock Text="Notifications" Style="{StaticResource SectionTitleStyle}" FontSize="13"/>
+                            <CheckBox Content="Show Idle Notification" IsChecked="{Binding ShowIdleNotification}"
+                                      Style="{StaticResource ModernCheckBoxStyle}" Margin="0,0,0,7"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,14">
+                                <TextBlock Text="Idle after (min):" Foreground="#94A3B8" FontSize="12" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBox Text="{Binding IdleMinutes}" Style="{StaticResource ModernTextBoxStyle}" Width="70" Padding="6,4"/>
+                            </StackPanel>
+
+                            <TextBlock Text="Smart Distribution" Style="{StaticResource SectionTitleStyle}" FontSize="13"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                                <TextBlock Text="Min match confidence:" Foreground="#94A3B8" FontSize="12" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBox Text="{Binding ConfidenceThreshold}" Style="{StaticResource ModernTextBoxStyle}" Width="70" Padding="6,4"
+                                         ToolTip="0.0 to 1.0 (e.g. 0.70)"/>
+                            </StackPanel>
+
+                            <Button Content="Save Settings" Command="{Binding SaveAutoLoggingCommand}"
+                                    Style="{StaticResource PrimaryButtonStyle}" HorizontalAlignment="Left"/>
+                            <TextBlock Text="{Binding StatusMessage}" Foreground="#22C55E" FontSize="12" Margin="0,10,0,0"
+                                       Visibility="{Binding StatusMessage, Converter={StaticResource StrToVis}}"/>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+            </TabControl>
+        </Grid>
+    </Border>
+</Window>

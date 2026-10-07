@@ -1,0 +1,356 @@
+<Window x:Class="JiraWorkLogAssistant.Views.NoteWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:conv="clr-namespace:JiraWorkLogAssistant.Views.Converters"
+        xmlns:ctl="clr-namespace:JiraWorkLogAssistant.Views.Controls"
+        mc:Ignorable="d"
+        Title="Note"
+        Width="360" Height="360"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        Topmost="{Binding Session.IsAlwaysOnTop}"
+        ResizeMode="CanResizeWithGrip" MinWidth="300" MinHeight="260"
+        Loaded="Window_Loaded" Closing="Window_Closing">
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+        <conv:InverseBoolToVisibilityConverter x:Key="InvBoolToVis"/>
+        <conv:StringToVisibilityConverter x:Key="StrToVis"/>
+
+        <!-- Light-theme toolbar/window button: dark glyph, subtle hover -->
+        <Style x:Key="LightIconButton" TargetType="Button">
+            <Setter Property="Foreground" Value="#374151"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd" Background="Transparent" CornerRadius="4">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#22000000"/>
+                                <Setter Property="Foreground" Value="#111827"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Toggle variant for toolbar formatting buttons (shows pressed state) -->
+        <Style x:Key="LightToggleButton" TargetType="ToggleButton">
+            <Setter Property="Foreground" Value="#374151"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border x:Name="bd" Background="Transparent" CornerRadius="4">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#22000000"/>
+                                <Setter Property="Foreground" Value="#111827"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#33000000"/>
+                                <Setter Property="Foreground" Value="#111827"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Light close button: dark glyph, red hover -->
+        <Style x:Key="LightCloseButton" TargetType="Button" BasedOn="{StaticResource LightIconButton}">
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Foreground" Value="White"/>
+                </Trigger>
+            </Style.Triggers>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd" Background="Transparent" CornerRadius="4">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#EF4444"/>
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Light input field -->
+        <Style x:Key="LightTextBox" TargetType="TextBox">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="#111827"/>
+            <Setter Property="CaretBrush" Value="#111827"/>
+            <Setter Property="BorderBrush" Value="#CBD5E1"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="5,3"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+    </Window.Resources>
+    <Border x:Name="RootBorder" Background="#FFFDF5" BorderThickness="2" CornerRadius="8" BorderBrush="#FBBF24">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>   <!-- header -->
+                <RowDefinition Height="Auto"/>   <!-- sync banner -->
+                <RowDefinition Height="Auto"/>   <!-- task search picker -->
+                <RowDefinition Height="Auto"/>   <!-- formatting toolbar -->
+                <RowDefinition Height="*"/>      <!-- writing panel (90%) -->
+                <RowDefinition Height="Auto"/>   <!-- footer -->
+            </Grid.RowDefinitions>
+
+            <!-- HEADER: current task title + smart toggle + 3-dot task menu + window buttons -->
+            <Border Grid.Row="0" x:Name="HeaderBar" CornerRadius="6,6,0,0" Padding="8,5"
+                    Background="#26263A" MouseLeftButtonDown="Header_MouseLeftButtonDown">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Smart toggle (left) -->
+                    <ToggleButton Grid.Column="0" x:Name="SmartToggle"
+                                  IsChecked="{Binding SmartMode, Mode=TwoWay}"
+                                  Content="Smart"
+                                  VerticalAlignment="Center" Margin="0,0,8,0"
+                                  Style="{StaticResource SmartToggleStyle}">
+                        <ToggleButton.ToolTip>
+                            <ToolTip MaxWidth="260">
+                                <TextBlock TextWrapping="Wrap">
+                                    <Run FontWeight="Bold" Text="Smart Distribution"/><LineBreak/>
+                                    When ON, write notes freely and the AI matches them across multiple Jira tasks and splits your time — you review before submitting.
+                                    When OFF, everything you write is logged to the one selected task.
+                                </TextBlock>
+                            </ToolTip>
+                        </ToggleButton.ToolTip>
+                    </ToggleButton>
+
+                    <!-- Task area: smart label / selected display / hint -->
+                    <Grid Grid.Column="1" VerticalAlignment="Center">
+                        <!-- Smart mode label -->
+                        <TextBlock x:Name="SmartLabel" Text="🤖  AI Smart Distribution"
+                                   FontSize="13" FontWeight="Bold" Foreground="#5B21B6"
+                                   VerticalAlignment="Center" Visibility="Collapsed"/>
+
+                        <!-- Selected task display + pencil edit -->
+                        <Grid x:Name="SelectedPanel" Visibility="Collapsed">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock x:Name="SelectedTaskText" VerticalAlignment="Center"
+                                       FontSize="13" FontWeight="Bold" Foreground="#1F2937"
+                                       TextTrimming="CharacterEllipsis"/>
+                            <Button Grid.Column="1" Content="✎" Click="EditTask_Click" ToolTip="Change task"
+                                    Style="{StaticResource LightIconButton}" Width="22" Height="22" FontSize="13"/>
+                        </Grid>
+
+                        <!-- Hint shown while choosing a task -->
+                        <TextBlock x:Name="HeaderHint" Text="Select a Jira task below"
+                                   FontSize="12" Foreground="#6B7280" FontStyle="Italic"
+                                   VerticalAlignment="Center" Visibility="Collapsed"/>
+                    </Grid>
+
+                    <!-- Window buttons (no pin) -->
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button Content="—" Click="Minimize_Click" ToolTip="Minimize"
+                                Style="{StaticResource LightIconButton}" Width="24" Height="24"/>
+                        <Button Content="✕" Click="Close_Click" ToolTip="Close"
+                                Style="{StaticResource LightCloseButton}" Width="24" Height="24"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- SYNC BANNER -->
+            <Border Grid.Row="1" Background="#FEF3C7" Padding="8,6"
+                    Visibility="{Binding ShowSyncPrompt, Converter={StaticResource BoolToVis}}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Jira not linked / no tasks. Link it in Settings, then sync."
+                               Foreground="#92400E" FontSize="11" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                    <Button Grid.Column="1" Content="⟳ Sync" Command="{Binding RefreshTasksCommand}"
+                            Style="{StaticResource PrimaryButtonStyle}" FontSize="11" Padding="8,4" Margin="6,0,0,0"/>
+                </Grid>
+            </Border>
+
+            <!-- TASK SEARCH PICKER (below header, above formatting toolbar) -->
+            <Border Grid.Row="2" x:Name="PickerRow" Padding="8,5" Visibility="Collapsed">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <ComboBox x:Name="TaskCombo" Grid.Column="0"
+                              IsEditable="True" StaysOpenOnEdit="True" IsTextSearchEnabled="False"
+                              Text="{Binding TaskSearch, UpdateSourceTrigger=PropertyChanged}"
+                              ItemsSource="{Binding FilteredTasks}"
+                              SelectionChanged="TaskCombo_SelectionChanged"
+                              GotKeyboardFocus="TaskCombo_GotFocus"
+                              FontSize="12"
+                              ToolTip="Search and select a Jira task">
+                        <ComboBox.ItemContainerStyle>
+                            <Style TargetType="ComboBoxItem">
+                                <Setter Property="ToolTip" Value="{Binding KeyAndSummary}"/>
+                            </Style>
+                        </ComboBox.ItemContainerStyle>
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" ToolTip="{Binding KeyAndSummary}">
+                                    <Border Width="8" Height="8" CornerRadius="4" Margin="0,0,6,0"
+                                            Background="{Binding TypeColor}" VerticalAlignment="Center"/>
+                                    <TextBlock Text="{Binding Key}" FontWeight="Bold" Foreground="#111827" Margin="0,0,5,0"/>
+                                    <TextBlock Text="{Binding Summary}" Foreground="#475569"
+                                               TextTrimming="CharacterEllipsis" MaxWidth="220"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                    <Button Grid.Column="1" Content="⟳" Command="{Binding RefreshTasksCommand}" ToolTip="Sync Jira tasks"
+                            Style="{StaticResource LightIconButton}" Width="26" Height="26" Margin="4,0,0,0"/>
+                </Grid>
+            </Border>
+
+            <!-- FORMATTING TOOLBAR (standard text-editor layout) -->
+            <Border Grid.Row="3" x:Name="ToolbarBar" Background="#23233A" Padding="5,3"
+                    BorderBrush="#00000022" BorderThickness="0,1,0,1">
+                <DockPanel LastChildFill="False">
+                    <!-- Commits button on the right -->
+                    <Button DockPanel.Dock="Right" Command="{Binding FetchCommitsCommand}" Cursor="Hand"
+                            Padding="10,5" Margin="4,0,0,0"
+                            ToolTip="Fetch today's Bitbucket commits and add them as points">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border x:Name="bd" CornerRadius="4" Padding="{TemplateBinding Padding}" Background="#2563EB">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="⎇" FontSize="13" Foreground="White" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                        <TextBlock Text="Commits" FontSize="12" FontWeight="SemiBold" Foreground="White" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="bd" Property="Background" Value="#1D4ED8"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+
+                    <!-- Formatting buttons on the left -->
+                    <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
+                    <ToggleButton x:Name="BoldBtn" Content="B" FontWeight="Bold"
+                                  Click="Bold_Click"
+                                  Style="{StaticResource LightToggleButton}" Width="26" Height="24" ToolTip="Bold (Ctrl+B)"/>
+                    <ToggleButton x:Name="ItalicBtn" Content="I" FontStyle="Italic" FontFamily="Georgia"
+                                  Click="Italic_Click"
+                                  Style="{StaticResource LightToggleButton}" Width="26" Height="24" ToolTip="Italic (Ctrl+I)"/>
+                    <ToggleButton x:Name="UnderlineBtn"
+                                  Click="Underline_Click"
+                                  Style="{StaticResource LightToggleButton}" Width="26" Height="24" ToolTip="Underline (Ctrl+U)">
+                        <TextBlock Text="U" TextDecorations="Underline"/>
+                    </ToggleButton>
+                    <Button x:Name="StrikeBtn"
+                            Click="Strikethrough_Click"
+                            Style="{StaticResource LightIconButton}" Width="26" Height="24" ToolTip="Strikethrough">
+                        <TextBlock Text="S" TextDecorations="Strikethrough"/>
+                    </Button>
+
+                    <Border Width="1" Background="#22000000" Margin="5,3"/>
+
+                    <Button Content="•—" FontSize="12" Command="EditingCommands.ToggleBullets" CommandTarget="{Binding ElementName=Editor}"
+                            Style="{StaticResource LightIconButton}" Width="28" Height="24" ToolTip="Bullet list"/>
+                    <Button Content="1.—" FontSize="11" Command="EditingCommands.ToggleNumbering" CommandTarget="{Binding ElementName=Editor}"
+                            Style="{StaticResource LightIconButton}" Width="30" Height="24" ToolTip="Numbered list"/>
+
+                    <Border Width="1" Background="#22000000" Margin="5,3"/>
+
+                    <Button Content="A+" Click="FontUp_Click"
+                            Style="{StaticResource LightIconButton}" Width="28" Height="24" ToolTip="Increase font size"/>
+                    <Button Content="A−" Click="FontDown_Click"
+                            Style="{StaticResource LightIconButton}" Width="28" Height="24" ToolTip="Decrease font size"/>
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+
+            <!-- WRITING PANEL (90%) — light sticky paper, black ink -->
+            <RichTextBox Grid.Row="4" x:Name="Editor"
+                         Background="#FFFFFF" Foreground="#111827" BorderThickness="0"
+                         Padding="10,8" FontSize="13" SpellCheck.IsEnabled="True"
+                         VerticalScrollBarVisibility="Auto" AcceptsTab="True"
+                         CaretBrush="#111827"
+                         SelectionChanged="Editor_SelectionChanged"
+                         TextChanged="Editor_TextChanged">
+                <RichTextBox.Resources>
+                    <Style TargetType="Paragraph">
+                        <Setter Property="Margin" Value="0,2"/>
+                    </Style>
+                </RichTextBox.Resources>
+            </RichTextBox>
+
+            <!-- FOOTER -->
+            <Border Grid.Row="5" x:Name="FooterBar" Background="#26263A" Padding="8,6" CornerRadius="0,0,6,6">
+                <StackPanel>
+                    <Grid>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="⏱" Foreground="#475569" FontSize="12" VerticalAlignment="Center" Margin="0,0,4,0"
+                                       ToolTip="Time spent. In Smart mode this total is split across the matched tasks."/>
+                            <ctl:NumericSpinner Width="50" Height="26" Value="{Binding Hours, Mode=TwoWay}" Minimum="0" Maximum="24"/>
+                            <TextBlock Text="h" Foreground="#475569" FontSize="11" VerticalAlignment="Center" Margin="3,0,6,0"/>
+                            <ctl:NumericSpinner Width="50" Height="26" Value="{Binding Minutes, Mode=TwoWay}" Minimum="0" Maximum="59"/>
+                            <TextBlock Text="m" Foreground="#475569" FontSize="11" VerticalAlignment="Center" Margin="3,0,8,0"/>
+
+                            <!-- Date picker (manual/smart log; auto-log always uses today) -->
+                            <Button x:Name="DateButton" Content="📅" Click="DateButton_Click" ToolTip="Choose log date"
+                                    Style="{StaticResource LightIconButton}" Width="26" Height="26"/>
+                            <TextBlock Text="{Binding SelectedDateLabel}" Foreground="#475569" FontSize="11"
+                                       VerticalAlignment="Center" Margin="2,0,0,0"/>
+                            <Popup x:Name="DatePopup" PlacementTarget="{Binding ElementName=DateButton}"
+                                   Placement="Bottom" StaysOpen="False" AllowsTransparency="True">
+                                <Border Background="White" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="4">
+                                    <Calendar x:Name="DateCalendar" SelectedDate="{Binding SelectedDate, Mode=TwoWay}"
+                                              SelectedDatesChanged="DateCalendar_Changed"/>
+                                </Border>
+                            </Popup>
+                        </StackPanel>
+                        <Button HorizontalAlignment="Right" Content="⚡ Log now" Command="{Binding LogNowCommand}"
+                                Style="{StaticResource SuccessButtonStyle}" FontSize="12" Padding="10,5"
+                                Visibility="{Binding ShowLogNow, Converter={StaticResource BoolToVis}}"/>
+                    </Grid>
+
+                    <TextBlock Text="{Binding StatusMessage}" FontSize="10" Margin="0,4,0,0"
+                               TextWrapping="Wrap"
+                               Visibility="{Binding StatusMessage, Converter={StaticResource StrToVis}}">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="#B45309"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding StatusIsError}" Value="True">
+                                        <Setter Property="Foreground" Value="#EF4444"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <ProgressBar IsIndeterminate="True" Height="2" Margin="0,4,0,0"
+                                 Foreground="{StaticResource AccentBrush}" Background="Transparent" BorderThickness="0"
+                                 Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Border>
+</Window>
